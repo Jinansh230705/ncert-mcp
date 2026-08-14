@@ -147,13 +147,13 @@ You can connect directly to the hosted MCP server without running it locally.
 
 **Connection Guide for Claude.ai:**
 1. Go to Claude.ai and add a new Remote MCP Server.
-2. **URL:** `https://ncert.getmaterio.app/mcp`
+2. **URL:** `https://ncert.getmaterio.app/mcp/sse`
 3. **Authentication:** None (No Auth)
 
 ### 2. ChatGPT Custom GPT
 
 Try it out on ChatGPT using the GPT Store:
-**[NCERT GPT in ChatGPT's GPT Store](https://chatgpt.com/g/g-6a57962baecc8191a03ec83955651bf9-ncert)**
+**[NCERT GPT](https://chatgpt.com/g/g-6a57962baecc8191a03ec83955651bf9-ncert)**
 
 Alternatively, create your own Custom GPT and paste the OpenAPI spec: `https://ncert.getmaterio.app/openapi.json`
 

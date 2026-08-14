@@ -1,0 +1,78 @@
+name: NCERT Curriculum Ingestion Pipeline
+
+on:
+  # Allows you to trigger the workflow manually from the GitHub Actions UI
+  workflow_dispatch:
+    inputs:
+      data_json_url:
+        description: 'URL to the hosted data.json'
+        required: true
+        default: 'https://raw.githubusercontent.com/username/repo/main/data.json'
+
+  # Optionally run this automatically once a month
+  # schedule:
+  #   - cron: '0 0 1 * *' # 1st day of every month
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    
+    # We set a higher timeout because downloading PDFs and hitting LLMs takes a while
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Download hosted data.json
+        run: |
+          echo "Downloading data.json from ${{ github.event.inputs.data_json_url }}"
+          curl -s -L -o data.json "${{ github.event.inputs.data_json_url }}"
+          
+      - name: Install Dependencies
+        working-directory: ./mcp
+        run: bun install
+
+      - name: Synchronize Book Codes
+        working-directory: ./mcp
+        run: |
+          echo "Syncing NCERT_TEXTBOOK_CHAPTERS with data.json..."
+          bun run scripts/sync_codes.ts
+        
+      - name: Commit Updated Codes (If Any)
+        working-directory: ./mcp
+        run: |
+          if [[ -n $(git status -s src/pipeline.ts) ]]; then
+            echo "pipeline.ts changed! Committing back to the repository..."
+            git config --global user.name "github-actions[bot]"
+            git config --global user.email "github-actions[bot]@users.noreply.github.com"
+            git add src/pipeline.ts
+            git commit -m "chore: auto-update NCERT book codes from latest data.json"
+            git push
+          else
+            echo "No code changes detected."
+          fi
+
+
+
+      - name: Run Ingestion Pipeline
+        working-directory: ./mcp
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
+          MODEL_NAME: ${{ secrets.MODEL_NAME }}
+        run: |
+          echo "Starting the ingestion process. This may take a while..."
+          bun run src/pipeline.ts
+
+      - name: Upload SQLite Database Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ncert-database
+          path: mcp/ncert_db.sqlite
+          retention-days: 30

@@ -1,0 +1,11 @@
+name = "ncert-mcp"
+main = "src/worker.ts"
+compatibility_date = "2024-11-20"
+routes = [
+  { pattern = "ncert.getmaterio.app", custom_domain = true }
+]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "ncert-mcp-db"
+database_id = "d4e9e4a4-2c40-4d17-8a73-18e248e7dbf5"
